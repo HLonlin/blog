@@ -9,14 +9,14 @@ import { ElMessage } from 'element-plus' // https://element.eleme.cn/#/zh-CN/com
 
 const service = axios.create({
   baseURL: process.env.BASE_API, // api的base_url
-  timeout: 3600000 // 请求超时时间 1小时
+  timeout: 60 * 60 * 1000 // 请求超时时间 1小时
 })
 
 // request拦截器  请求头设置token
 service.interceptors.request.use(
   config => {
     if (window.sessionStorage.getItem('token')) {
-      config.headers.AuthorToken = window.sessionStorage.getItem('token') // 让每个请求携带自定义token 请根据实际情况自行修改
+      config.headers.authorization = window.sessionStorage.getItem('token') // 让请求携带token
     }
     return config
   },
@@ -28,13 +28,16 @@ service.interceptors.request.use(
 // response拦截器  状态拦截
 service.interceptors.response.use(
   response => {
-    if (response.data.code === '111') {
+    if (response.data.code === '401') {
       ElMessage({
         type: 'error',
         message: '登录状态过期，请重新登录'
       })
       router.push({
-        path: '/login'
+        path: '/login',
+        query: {
+          redirect: location.hostname
+        }
       })
     }
 
